@@ -1,0 +1,36 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+// Рекурсивная функция для проверки строки на палиндромность
+bool isPalindrome(const string& str, int start, int end) {
+    // Базовый случай: если индексы пересеклись или достигли середины,
+    // значит строка является палиндромом
+    if (start >= end)
+        return true;
+
+    // Преобразуем символы к нижнему регистру и сравниваем
+    char first = tolower(str[start]);
+    char last = tolower(str[end]);
+
+    // Если символы равны, продолжаем проверять оставшиеся символы
+    if (first == last)
+        return isPalindrome(str, start + 1, end - 1);
+    else
+        return false;
+}
+
+int main() {
+    string input;
+    cout << "Введите строку: ";
+    cin >> input;
+
+    bool result = isPalindrome(input, 0, input.length() - 1);
+
+    if (result)
+        cout << "Строка является палиндромом." << endl;
+    else
+        cout << "Строка не является палиндромом." << endl;
+
+    return 0;
+}
