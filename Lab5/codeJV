@@ -1,0 +1,35 @@
+import java.util.Scanner;
+
+public class code {
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Введите строку: ");
+        String input = scanner.nextLine();
+        
+        boolean result = isPalindrome(input);
+        
+        if (result)
+            System.out.println("Строка является палиндромом.");
+        else
+            System.out.println("Строка не является палиндромом.");
+            
+        scanner.close(); // Закрываем сканнер, чтобы предотвратить утечку ресурсов
+    }
+
+    // Рекурсивная функция для проверки строки на палиндромность
+    private static boolean isPalindrome(String str) {
+        // Базовый случай: если строка пустая или одна буква, то это палиндром
+        if (str.length() <= 1)
+            return true;
+        
+        // Преобразуем символы к нижнему регистру и сравниваем
+        char firstChar = Character.toLowerCase(str.charAt(0));
+        char lastChar = Character.toLowerCase(str.charAt(str.length() - 1));
+        
+        // Если символы равны, продолжаем рекурсию с усечённой строкой
+        if (firstChar == lastChar)
+            return isPalindrome(str.substring(1, str.length() - 1)); // Вырезаем первый и последний символы
+        else
+            return false;
+    }
+}
