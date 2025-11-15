@@ -1,0 +1,16 @@
+def is_palindrome(s):
+    # Базовые случаи: пустая строка или одиночный символ - палиндром
+    if len(s) <= 1:
+        return True
+
+    # Проверяем равенство первого и последнего символов
+    elif s[0].lower() == s[-1].lower():
+        # Рекурсия: уменьшаем длину строки на оба крайних символа
+        return is_palindrome(s[1:-1])
+    
+    else:
+        return False
+
+# Примеры использования:
+print(is_palindrome("radar"))      # True
+print(is_palindrome("Python"))     # False
