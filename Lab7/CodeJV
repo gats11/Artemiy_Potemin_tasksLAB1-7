@@ -1,0 +1,102 @@
+import java.util.*;
+
+public class SimulatedAnnealingTSP {
+
+    public static double calculateTourCost(List<Integer> tour, double[][] distances) {
+        double cost = 0;
+        int n = tour.size();
+        for (int i = 0; i < n; i++) {
+            cost += distances[tour.get(i)][tour.get((i + 1) % n)];
+        }
+        return cost;
+    }
+
+    public static class Result {
+        public List<Integer> tour;
+        public double cost;
+        public int improvementsCount;
+
+        public Result(List<Integer> tour, double cost, int improvementsCount) {
+            this.tour = tour;
+            this.cost = cost;
+            this.improvementsCount = improvementsCount;
+        }
+    }
+
+    public static Result simulatedAnnealingTSP(
+        double[][] distances,
+        double initialTemp,
+        double coolingRate,
+        int iterationsPerTemp) {
+        
+        int n = distances.length;
+        Random random = new Random();
+
+        // Инициализировать случайный маршрут
+        List<Integer> currentTour = new ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            currentTour.add(i);
+        }
+        Collections.shuffle(currentTour);
+
+        double currentCost = calculateTourCost(currentTour, distances);
+
+        List<Integer> bestTour = new ArrayList<>(currentTour);
+        double bestCost = currentCost;
+
+        double temperature = initialTemp;
+        int improvementsCount = 0;
+
+        while (temperature > 1e-6) {
+            for (int iter = 0; iter < iterationsPerTemp; iter++) {
+                // Создать соседнее решение (2-opt)
+                List<Integer> neighborTour = new ArrayList<>(currentTour);
+                int i = random.nextInt(n);
+                int j = random.nextInt(n);
+                if (i > j) {
+                    int tmp = i;
+                    i = j;
+                    j = tmp;
+                }
+
+                Collections.reverse(neighborTour.subList(i, j + 1));
+
+                double neighborCost = calculateTourCost(neighborTour, distances);
+
+                double delta = neighborCost - currentCost;
+                if (delta < 0 || random.nextDouble() < Math.exp(-delta / temperature)) {
+                    currentTour = neighborTour;
+                    currentCost = neighborCost;
+
+                    if (currentCost < bestCost) {
+                        bestTour = new ArrayList<>(currentTour);
+                        bestCost = currentCost;
+                        improvementsCount++;
+                    }
+                }
+            }
+
+            temperature *= coolingRate;
+        }
+
+        System.out.println("Количество улучшений: " + improvementsCount);
+        return new Result(bestTour, bestCost, improvementsCount);
+    }
+
+    public static void main(String[] args) {
+        double[][] distances = {
+            {0, 10, 15, 20, 25, 30, 35, 40},
+            {10, 0, 35, 25, 30, 20, 15, 10},
+            {15, 35, 0, 30, 20, 25, 40, 35},
+            {20, 25, 30, 0, 10, 15, 20, 25},
+            {25, 30, 20, 10, 0, 35, 30, 20},
+            {30, 20, 25, 15, 35, 0, 10, 15},
+            {35, 15, 40, 20, 30, 10, 0, 25},
+            {40, 10, 35, 25, 20, 15, 25, 0}
+        };
+
+        Result result = simulatedAnnealingTSP(distances, 100.0, 0.95, 100);
+        System.out.println("Маршрут: " + result.tour);
+        System.out.println("Стоимость: " + result.cost);
+    }
+}
