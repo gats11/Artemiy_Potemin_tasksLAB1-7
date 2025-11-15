@@ -1,0 +1,91 @@
+import math
+import random
+from typing import List, Tuple
+
+def simulated_annealing_tsp(
+    distances: List[List[float]],
+    initial_temp: float = 100.0,
+    cooling_rate: float = 0.95,
+    iterations_per_temp: int = 100
+) -> Tuple[List[int], float]:
+    """
+    Метаэвристика: Имитация отжига для TSP
+
+    Args:
+        distances: матрица расстояний между городами
+        initial_temp: начальная температура
+        cooling_rate: коэффициент охлаждения
+        iterations_per_temp: итерации при каждой температуре
+
+    Returns:
+        кортеж (маршрут, длина маршрута)
+    """
+
+    n = len(distances)
+
+    # Инициализировать случайный маршрут
+    current_tour = list(range(n))
+    random.shuffle(current_tour)
+    current_cost = calculate_tour_cost(current_tour, distances)
+
+    # Лучший найденный маршрут
+    best_tour = current_tour[:]
+    best_cost = current_cost
+
+    temperature = initial_temp
+    improvements_count = 0
+
+    while temperature > 1e-6:
+        for _ in range(iterations_per_temp):
+            # Создать соседнее решение (2-opt обмен)
+            neighbor_tour = current_tour[:]
+            i, j = random.sample(range(n), 2)
+            if i > j:
+                i, j = j, i
+            neighbor_tour[i:j+1] = reversed(neighbor_tour[i:j+1])
+
+            neighbor_cost = calculate_tour_cost(neighbor_tour, distances)
+
+            # Критерий Метрополиса
+            delta = neighbor_cost - current_cost
+            if delta < 0 or random.random() < math.exp(-delta / temperature):
+                current_tour = neighbor_tour
+                current_cost = neighbor_cost
+
+                # Обновить лучшее решение
+                if current_cost < best_cost:
+                    best_tour = current_tour[:]
+                    best_cost = current_cost
+                    improvements_count += 1
+
+        # Охладить
+        temperature *= cooling_rate
+
+    print(f"Количество улучшений: {improvements_count}")
+    return best_tour, best_cost
+
+def calculate_tour_cost(tour: List[int], distances: List[List[float]]) -> float:
+    """Вычислить длину маршрута"""
+    cost = 0
+    n = len(tour)
+    for i in range(n):
+        cost += distances[tour[i]][tour[(i + 1) % n]]
+    return cost
+
+# Пример использования
+if __name__ == "__main__":
+    # Матрица расстояний для 8 городов
+    distances = [
+        [0, 10, 15, 20, 25, 30, 35, 40],
+        [10, 0, 35, 25, 30, 20, 15, 10],
+        [15, 35, 0, 30, 20, 25, 40, 35],
+        [20, 25, 30, 0, 10, 15, 20, 25],
+        [25, 30, 20, 10, 0, 35, 30, 20],
+        [30, 20, 25, 15, 35, 0, 10, 15],
+        [35, 15, 40, 20, 30, 10, 0, 25],
+        [40, 10, 35, 25, 20, 15, 25, 0]
+    ]
+
+    tour, cost = simulated_annealing_tsp(distances, 100.0, 0.95, 100)
+    print(f"Маршрут: {tour}")
+    print(f"Стоимость: {cost}")
