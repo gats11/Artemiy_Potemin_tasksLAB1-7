@@ -1,0 +1,99 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <random>
+#include <cmath>
+#include <numeric>
+
+using namespace std;
+
+double calculateTourCost(const vector<int>& tour,
+    const vector<vector<double>>& distances) {
+    double cost = 0;
+    int n = tour.size();
+    for (int i = 0; i < n; i++) {
+        cost += distances[tour[i]][tour[(i + 1) % n]];
+    }
+    return cost;
+}
+
+pair<vector<int>, double> simulatedAnnealingTSP(
+    const vector<vector<double>>& distances,
+    double initialTemp = 100.0,
+    double coolingRate = 0.95,
+    int iterationsPerTemp = 100) {
+    
+    int n = distances.size();
+
+    // Инициализировать случайный маршрут
+    vector<int> currentTour(n);
+    iota(currentTour.begin(), currentTour.end(), 0);
+    random_shuffle(currentTour.begin(), currentTour.end());
+
+    double currentCost = calculateTourCost(currentTour, distances);
+
+    vector<int> bestTour = currentTour;
+    double bestCost = currentCost;
+
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_real_distribution<> dis(0.0, 1.0);
+
+    double temperature = initialTemp;
+    int improvementsCount = 0;
+
+    while (temperature > 1e-6) {
+        for (int iter = 0; iter < iterationsPerTemp; iter++) {
+            // Создать соседнее решение
+            vector<int> neighborTour = currentTour;
+            uniform_int_distribution<> randIdx(0, n - 1);
+            int i = randIdx(gen);
+            int j = randIdx(gen);
+            if (i > j) swap(i, j);
+
+            reverse(neighborTour.begin() + i, neighborTour.begin() + j + 1);
+
+            double neighborCost = calculateTourCost(neighborTour, distances);
+
+            double delta = neighborCost - currentCost;
+            if (delta < 0 || dis(gen) < exp(-delta / temperature)) {
+                currentTour = neighborTour;
+                currentCost = neighborCost;
+
+                if (currentCost < bestCost) {
+                    bestTour = currentTour;
+                    bestCost = currentCost;
+                    improvementsCount++;
+                }
+            }
+        }
+
+        temperature *= coolingRate;
+    }
+
+    cout << "Количество улучшений: " << improvementsCount << endl;
+    return {bestTour, bestCost};
+}
+
+int main() {
+    vector<vector<double>> distances = {
+        {0, 10, 15, 20, 25, 30, 35, 40},
+        {10, 0, 35, 25, 30, 20, 15, 10},
+        {15, 35, 0, 30, 20, 25, 40, 35},
+        {20, 25, 30, 0, 10, 15, 20, 25},
+        {25, 30, 20, 10, 0, 35, 30, 20},
+        {30, 20, 25, 15, 35, 0, 10, 15},
+        {35, 15, 40, 20, 30, 10, 0, 25},
+        {40, 10, 35, 25, 20, 15, 25, 0}
+    };
+
+    auto [tour, cost] = simulatedAnnealingTSP(distances);
+
+    cout << "Маршрут: ";
+    for (int city : tour) {
+        cout << city << " ";
+    }
+    cout << "\nСтоимость: " << cost << endl;
+
+    return 0;
+}
